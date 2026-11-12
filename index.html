@@ -82,12 +82,20 @@
             transform: scale(0.85);
             filter: grayscale(0.8);
         }
-
+        /* Action Buttons */
         .btn-game {
             transition: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .btn-game:active {
             transform: scale(0.95);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.03); }
+        }
+        .calibration-glow {
+            animation: pulseGlow 2.5s infinite ease-in-out;
         }
     </style>
 </head>
@@ -112,7 +120,7 @@
                 <div id="status-title" class="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-amber-400">Player 1 Break</div>
                 <span class="text-[10px] font-mono bg-slate-800/80 px-2 py-0.5 rounded text-amber-300 font-bold" id="match-timer">00:00</span>
             </div>
-            <div id="status-sub" class="text-[11px] text-slate-300 truncate max-w-[300px] mx-auto">Aim with cursor • ↑/↓ Power • SPACE to shoot</div>
+            <div id="status-sub" class="text-[11px] text-slate-300 truncate max-w-[300px] mx-auto">Aim & drag back to shoot</div>
         </div>
 
         <!-- Player 2 Card -->
@@ -147,30 +155,65 @@
     <main id="canvas-wrapper" class="w-full relative">
         <canvas id="poolCanvas"></canvas>
 
+        <!-- UI Fit & Landscape Calibration Modal (Triggered by user button) -->
+        <div id="calibration-overlay" class="hidden absolute inset-0 bg-slate-950 flex items-center justify-center p-4 z-50 rounded-2xl">
+            <div class="glass-panel max-w-md w-full rounded-2xl p-8 text-center shadow-2xl border border-white/15 calibration-glow">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-600 border-2 border-cyan-400 flex items-center justify-center mx-auto mb-4 text-2xl font-black text-slate-950 shadow-lg">📱</div>
+                <h2 id="calibration-title" class="text-2xl font-black text-white tracking-tight mb-2">Turn Device to Landscape</h2>
+                <p id="calibration-desc" class="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4">Please rotate your phone/tablet to landscape mode for best fitting.</p>
+                
+                <div id="calibration-progress-box" class="hidden space-y-4 mb-6">
+                    <div class="w-full h-3 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-white/10">
+                        <div id="calibration-bar" class="h-full w-0 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 transition-all duration-300"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-mono text-slate-400">
+                        <span>Fitting UI to your screen</span>
+                        <span id="calibration-countdown" class="text-cyan-300 font-bold">20s</span>
+                    </div>
+                </div>
+
+                <div id="calibration-action-box" class="space-y-3">
+                    <button id="start-fitting-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
+                        <span>🔄</span> I Turned Landscape - Start 20s Fit
+                    </button>
+                    <button id="close-fitting-btn" class="btn-game w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase">
+                        Cancel
+                    </button>
+                </div>
+
+                <div id="calibration-ready-btn" class="hidden">
+                    <button id="finish-fitting-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
+                        <span>✨</span> UI Successfully Fitted! Resume Game
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Menu Overlay -->
         <div id="main-menu-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-40 rounded-2xl">
             <div class="glass-panel max-w-md w-full rounded-2xl p-8 text-center shadow-2xl border border-white/15">
                 <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 border-2 border-amber-400 flex items-center justify-center mx-auto mb-4 text-2xl font-black text-slate-950 shadow-lg">🎱</div>
                 <h1 class="text-3xl font-black text-white tracking-tight mb-2">8-Ball Pool 2.5D</h1>
-                <p class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">Quaternion 3D Physics</p>
-                <p class="text-sm text-slate-300 mb-6">Select your device type to begin:</p>
+                <p class="text-sm text-slate-300 mb-6">True 3D quaternion ball rolling physics, procedural acoustics, and sandbox editor.</p>
                 
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <button id="device-pc-btn" class="btn-game py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400">
-                        <span class="text-lg">💻</span> PC / Laptop
-                    </button>
-                    <button id="device-mobile-btn" class="btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20">
-                        <span class="text-lg">📱</span> Mobile / Tablet
-                    </button>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Select Your Device Type:</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="device-pc-btn" class="btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400">
+                            <span class="text-base">💻</span> PC / Laptop
+                        </button>
+                        <button id="device-mobile-btn" class="btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20">
+                            <span class="text-base">📱</span> Mobile / Tablet
+                        </button>
+                    </div>
                 </div>
 
-                <div id="menu-actions" class="space-y-3 hidden">
+                <div id="menu-actions" class="space-y-3">
                     <button id="menu-play-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
                         <span>▶</span> Play 8-Ball Match
                     </button>
-                    <button id="menu-sandbox-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold text-sm uppercase tracking-wider border border-amber-400/40 shadow-lg flex items-center justify-between px-6">
-                        <span class="flex items-center gap-2"><span>🛠</span> Sandbox Mode (Locked)</span>
-                        <span class="text-xs bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-400/30 text-amber-400">🔒 $4.99</span>
+                    <button id="menu-sandbox-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold text-sm uppercase tracking-wider border border-amber-400/40 shadow-lg flex items-center justify-center gap-2">
+                        <span>🛠</span> Sandbox Mode (Custom Editor)
                     </button>
                 </div>
             </div>
@@ -258,6 +301,9 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-2">
+            <button id="fix-ui-btn" class="btn-game glass-panel hover:bg-slate-800/90 text-cyan-400 font-bold text-xs px-3 py-2.5 rounded-xl flex items-center gap-1" title="Fix UI / Fit to Screen">
+                <span>📱</span> <span class="hidden sm:inline">Fit UI</span>
+            </button>
             <button id="sound-btn" class="btn-game glass-panel hover:bg-slate-800/90 text-slate-200 font-semibold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5">
                 <span id="sound-icon">🔊</span>
                 <span class="hidden sm:inline">Audio</span>
@@ -496,6 +542,60 @@
                 this.buildSandboxPicker();
                 this.handleResize();
                 this.updatePowerUI();
+            }
+
+            triggerUiFitting() {
+                const overlay = document.getElementById('calibration-overlay');
+                if (!overlay) return;
+                overlay.classList.remove('hidden');
+
+                document.getElementById('calibration-title').textContent = "Turn Device to Landscape";
+                document.getElementById('calibration-desc').textContent = "Please rotate your phone/tablet to landscape mode for best fitting.";
+                document.getElementById('calibration-progress-box').classList.add('hidden');
+                document.getElementById('calibration-action-box').classList.remove('hidden');
+                document.getElementById('calibration-ready-btn').classList.add('hidden');
+
+                const startBtn = document.getElementById('start-fitting-btn');
+                const closeBtn = document.getElementById('close-fitting-btn');
+                const finishBtn = document.getElementById('finish-fitting-btn');
+
+                startBtn.onclick = () => {
+                    document.getElementById('calibration-action-box').classList.add('hidden');
+                    document.getElementById('calibration-progress-box').classList.remove('hidden');
+                    document.getElementById('calibration-title').textContent = "Fitting UI to Screen...";
+                    document.getElementById('calibration-desc').textContent = "Calibrating viewports and touch targets...";
+
+                    let timeLeft = 20;
+                    const bar = document.getElementById('calibration-bar');
+                    const countdown = document.getElementById('calibration-countdown');
+                    bar.style.width = '0%';
+                    countdown.textContent = '20s';
+
+                    const fitTimer = setInterval(() => {
+                        timeLeft--;
+                        const pct = ((20 - timeLeft) / 20) * 100;
+                        bar.style.width = `${pct}%`;
+                        countdown.textContent = `${timeLeft}s`;
+
+                        if (timeLeft <= 0) {
+                            clearInterval(fitTimer);
+                            countdown.textContent = "Fit Complete!";
+                            document.getElementById('calibration-progress-box').classList.add('hidden');
+                            document.getElementById('calibration-ready-btn').classList.remove('hidden');
+                            document.getElementById('calibration-title').textContent = "Ready!";
+                            document.getElementById('calibration-desc').textContent = "UI is now perfectly fitted to your screen.";
+                        }
+                    }, 1000);
+                };
+
+                closeBtn.onclick = () => {
+                    overlay.classList.add('hidden');
+                };
+
+                finishBtn.onclick = () => {
+                    overlay.classList.add('hidden');
+                    this.handleResize();
+                };
             }
 
             toScreen(lx, ly) {
@@ -1460,19 +1560,27 @@
                     };
                 };
 
-                document.getElementById('device-pc-btn').addEventListener('click', () => {
-                    this.deviceType = 'PC';
-                    document.getElementById('device-pc-btn').className = 'btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400';
-                    document.getElementById('device-mobile-btn').className = 'btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20';
-                    document.getElementById('menu-actions').classList.remove('hidden');
-                });
+                const fixUiBtn = document.getElementById('fix-ui-btn');
+                if (fixUiBtn) {
+                    fixUiBtn.addEventListener('click', () => this.triggerUiFitting());
+                }
 
-                document.getElementById('device-mobile-btn').addEventListener('click', () => {
-                    this.deviceType = 'MOBILE';
-                    document.getElementById('device-mobile-btn').className = 'btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400';
-                    document.getElementById('device-pc-btn').className = 'btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20';
-                    document.getElementById('menu-actions').classList.remove('hidden');
-                });
+                const pcBtn = document.getElementById('device-pc-btn');
+                const mobileBtn = document.getElementById('device-mobile-btn');
+                if (pcBtn) {
+                    pcBtn.addEventListener('click', () => {
+                        this.deviceType = 'PC';
+                        pcBtn.className = 'btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400';
+                        if (mobileBtn) mobileBtn.className = 'btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20';
+                    });
+                }
+                if (mobileBtn) {
+                    mobileBtn.addEventListener('click', () => {
+                        this.deviceType = 'MOBILE';
+                        mobileBtn.className = 'btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400';
+                        if (pcBtn) pcBtn.className = 'btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20';
+                    });
+                }
 
                 const onDown = async (e) => {
                     await this.sound.init();
