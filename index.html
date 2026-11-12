@@ -147,33 +147,24 @@
     <main id="canvas-wrapper" class="w-full relative">
         <canvas id="poolCanvas"></canvas>
 
-        <!-- Device Selection Modal Overlay -->
-        <div id="device-select-overlay" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 z-50 rounded-2xl">
-            <div class="glass-panel max-w-md w-full rounded-2xl p-8 text-center shadow-2xl border border-white/15">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 border-2 border-amber-400 flex items-center justify-center mx-auto mb-4 text-2xl font-black text-slate-950 shadow-lg">📱</div>
-                <h2 class="text-2xl font-black text-white tracking-tight mb-2">Select Your Device</h2>
-                <p class="text-sm text-slate-300 mb-8">Choose your platform to load optimal controls for aiming and shooting.</p>
-                
-                <div class="space-y-3">
-                    <button id="device-mobile-btn" class="btn-game w-full py-4 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-extrabold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-3">
-                        <span class="text-lg">📲</span> Mobile / Tablet (Touch Controls)
-                    </button>
-                    <button id="device-pc-btn" class="btn-game w-full py-4 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold text-sm uppercase tracking-wider border border-amber-400/40 shadow-lg flex items-center justify-center gap-3">
-                        <span class="text-lg">💻</span> PC / Laptop (Mouse & Keyboard)
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Main Menu Overlay -->
-        <div id="main-menu-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-40 rounded-2xl">
+        <div id="main-menu-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-40 rounded-2xl">
             <div class="glass-panel max-w-md w-full rounded-2xl p-8 text-center shadow-2xl border border-white/15">
                 <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 border-2 border-amber-400 flex items-center justify-center mx-auto mb-4 text-2xl font-black text-slate-950 shadow-lg">🎱</div>
                 <h1 class="text-3xl font-black text-white tracking-tight mb-2">8-Ball Pool 2.5D</h1>
-                <p id="device-mode-badge" class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">Mode: PC Controls</p>
-                <p class="text-sm text-slate-300 mb-8">True 3D quaternion ball rolling physics, procedural acoustics, and sandbox editor.</p>
+                <p class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">Quaternion 3D Physics</p>
+                <p class="text-sm text-slate-300 mb-6">Select your device type to begin:</p>
                 
-                <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button id="device-pc-btn" class="btn-game py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400">
+                        <span class="text-lg">💻</span> PC / Laptop
+                    </button>
+                    <button id="device-mobile-btn" class="btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20">
+                        <span class="text-lg">📱</span> Mobile / Tablet
+                    </button>
+                </div>
+
+                <div id="menu-actions" class="space-y-3 hidden">
                     <button id="menu-play-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
                         <span>▶</span> Play 8-Ball Match
                     </button>
@@ -256,18 +247,9 @@
             </div>
         </div>
 
-        <!-- Mobile Touch Virtual Controls Overlay (Visible only in mobile mode) -->
-        <div id="mobile-controls-panel" class="hidden flex items-center gap-2">
-            <button id="mob-aim-left" class="btn-game px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-black text-xs rounded-xl border border-white/15">◀ Aim</button>
-            <button id="mob-aim-right" class="btn-game px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-black text-xs rounded-xl border border-white/15">Aim ▶</button>
-            <button id="mob-power-down" class="btn-game px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs rounded-xl border border-white/15">Pwr -</button>
-            <button id="mob-power-up" class="btn-game px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs rounded-xl border border-white/15">Pwr +</button>
-            <button id="mob-shoot-btn" class="btn-game px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-black text-xs rounded-xl shadow-lg">SHOOT</button>
-        </div>
-
         <!-- Power Meter Readout -->
         <div id="power-meter-container" class="glass-panel rounded-xl px-4 py-2 flex items-center gap-3 flex-1 max-w-xs">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 whitespace-nowrap">Power <kbd class="ml-1 px-1.5 py-0.5 text-[9px] bg-slate-800 border border-slate-600 rounded text-amber-300">↑/↓</kbd></span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 whitespace-nowrap">Power</span>
             <div class="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
                 <div id="power-bar" class="h-full w-3/4 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 transition-all duration-75"></div>
             </div>
@@ -462,6 +444,7 @@
                 this.canvas = document.getElementById('poolCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.sound = new SoundEngine();
+                this.deviceType = 'PC'; // Default PC until chosen
 
                 this.tableW = 1000;
                 this.tableH = 500;
@@ -478,7 +461,6 @@
                 this.restitutionRail = 0.82;
                 this.subSteps = 6;
 
-                this.deviceType = 'PC'; // 'PC' or 'MOBILE'
                 this.gameMode = 'MENU';
                 this.sandboxState = 'EDIT';
                 this.balls = [];
@@ -514,23 +496,6 @@
                 this.buildSandboxPicker();
                 this.handleResize();
                 this.updatePowerUI();
-            }
-
-            setDeviceType(type) {
-                this.deviceType = type;
-                document.getElementById('device-select-overlay').classList.add('hidden');
-                document.getElementById('main-menu-overlay').classList.remove('hidden');
-                
-                const badge = document.getElementById('device-mode-badge');
-                const mobControls = document.getElementById('mobile-controls-panel');
-                
-                if (type === 'MOBILE') {
-                    if (badge) badge.textContent = 'Mode: Mobile Touch Controls';
-                    if (mobControls) mobControls.classList.remove('hidden');
-                } else {
-                    if (badge) badge.textContent = 'Mode: PC Mouse & Keyboard Controls';
-                    if (mobControls) mobControls.classList.add('hidden');
-                }
             }
 
             toScreen(lx, ly) {
@@ -573,18 +538,6 @@
                 this.updatePowerUI();
                 document.getElementById('game-over-modal').classList.add('hidden');
 
-                this.matchStartTime = Date.now();
-                if (this.timerInterval) clearInterval(this.timerInterval);
-                this.timerInterval = setInterval(() => {
-                    if (this.gameMode === 'MATCH' && this.state !== 'GAME_OVER') {
-                        const elapsed = Math.floor((Date.now() - this.matchStartTime) / 1000);
-                        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-                        const secs = String(elapsed % 60).padStart(2, '0');
-                        const timerEl = document.getElementById('match-timer');
-                        if (timerEl) timerEl.textContent = `${mins}:${secs}`;
-                    }
-                }, 1000);
-
                 this.matchBalls.push(this.createBall(0, this.tableW * 0.25, this.tableH * 0.5));
 
                 const apexX = this.tableW * 0.72;
@@ -608,7 +561,22 @@
                 }
 
                 this.balls = this.matchBalls;
-                this.updateHUD('Player 1 Break', 'Aim with cursor • ↑/↓ Power • SPACE to shoot');
+                this.updateHUD('Player 1 Break', 'Aim & drag back to shoot');
+                this.startTimer();
+            }
+
+            startTimer() {
+                this.matchStartTime = Date.now();
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    if (this.gameMode === 'MATCH' && this.state !== 'GAME_OVER') {
+                        const elapsed = Math.floor((Date.now() - this.matchStartTime) / 1000);
+                        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                        const secs = String(elapsed % 60).padStart(2, '0');
+                        const timerEl = document.getElementById('match-timer');
+                        if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+                    }
+                }, 1000);
             }
 
             startMatchMode() {
@@ -650,10 +618,7 @@
 
             returnToMenu() {
                 this.gameMode = 'MENU';
-                if (this.timerInterval) {
-                    clearInterval(this.timerInterval);
-                    this.timerInterval = null;
-                }
+                if (this.timerInterval) clearInterval(this.timerInterval);
                 document.getElementById('main-menu-overlay').classList.remove('hidden');
                 document.getElementById('game-header').classList.add('hidden');
                 document.getElementById('game-footer').classList.add('hidden');
@@ -712,7 +677,7 @@
                     if (sandboxHeader) sandboxHeader.classList.remove('hidden');
                 } else {
                     if (modeIndicator) {
-                        modeIndicator.textContent = 'Mode: Play (Aim & Shoot)';
+                        modeIndicator.textContent = 'Mode: Play (Aim & Drag)';
                         modeIndicator.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-600/80 text-white uppercase tracking-wider';
                     }
                     if (toggleBtn) {
@@ -722,7 +687,7 @@
                     if (gameFooter) gameFooter.classList.remove('hidden');
                     if (sandboxHeader) sandboxHeader.classList.remove('hidden');
                     document.getElementById('status-title').textContent = 'Sandbox Play';
-                    document.getElementById('status-sub').textContent = 'Aim with cursor • ↑/↓ Power • SPACE to shoot';
+                    document.getElementById('status-sub').textContent = 'Aim & drag back to shoot';
                 }
             }
 
@@ -1014,11 +979,11 @@
                     this.updateHUD(`Player ${this.turn} — Ball in Hand`, `${foulMsg} Click table to place cue ball.`);
                 } else if (keepTurn) {
                     this.state = 'AIMING';
-                    this.updateHUD(`Player ${this.turn} Continues`, 'Nice shot! Aim with cursor • ↑/↓ Power • SPACE to shoot');
+                    this.updateHUD(`Player ${this.turn} Continues`, 'Nice shot! Aim & drag to shoot');
                 } else {
                     this.turn = opponent;
                     this.state = 'AIMING';
-                    this.updateHUD(`Player ${this.turn}'s Turn`, 'Aim with cursor • ↑/↓ Power • SPACE to shoot');
+                    this.updateHUD(`Player ${this.turn}'s Turn`, 'Aim & drag to shoot');
                 }
             }
 
@@ -1045,10 +1010,7 @@
 
             endGame(winner, reason) {
                 this.state = 'GAME_OVER';
-                if (this.timerInterval) {
-                    clearInterval(this.timerInterval);
-                    this.timerInterval = null;
-                }
+                if (this.timerInterval) clearInterval(this.timerInterval);
                 this.updateHUD(`Player ${winner} Wins!`, reason);
                 document.getElementById('winner-heading').textContent = `Player ${winner} Wins!`;
                 document.getElementById('winner-reason').textContent = reason;
@@ -1412,7 +1374,7 @@
                     ctx.stroke();
                 }
 
-                const pullBack = 18 + this.shotPower * 95;
+                const pullBack = 18 + this.shotPower * 110;
                 const stickLength = 310;
                 const backAngle = this.aimAngle + Math.PI;
 
@@ -1498,6 +1460,20 @@
                     };
                 };
 
+                document.getElementById('device-pc-btn').addEventListener('click', () => {
+                    this.deviceType = 'PC';
+                    document.getElementById('device-pc-btn').className = 'btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400';
+                    document.getElementById('device-mobile-btn').className = 'btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20';
+                    document.getElementById('menu-actions').classList.remove('hidden');
+                });
+
+                document.getElementById('device-mobile-btn').addEventListener('click', () => {
+                    this.deviceType = 'MOBILE';
+                    document.getElementById('device-mobile-btn').className = 'btn-game py-3 px-4 rounded-xl bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border-2 border-emerald-400';
+                    document.getElementById('device-pc-btn').className = 'btn-game py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-xs uppercase tracking-wider shadow-lg flex flex-col items-center gap-1 border border-white/20';
+                    document.getElementById('menu-actions').classList.remove('hidden');
+                });
+
                 const onDown = async (e) => {
                     await this.sound.init();
                     if (this.gameMode === 'MENU') return;
@@ -1531,18 +1507,12 @@
                     if (this.gameMode === 'MATCH' && this.state === 'BALL_IN_HAND') {
                         this.placeCueBallAt(logical.x, logical.y);
                         this.state = 'AIMING';
-                        this.updateHUD(`Player ${this.turn}'s Turn`, 'Aim with cursor • ↑/↓ Power • SPACE to shoot');
+                        this.updateHUD(`Player ${this.turn}'s Turn`, 'Aim & drag back to shoot');
                         return;
                     }
 
                     const cue = this.balls.find(b => b.id === 0 && !b.pocketed);
                     if (!cue) return;
-
-                    if (this.deviceType === 'MOBILE') {
-                        // In mobile touch mode, clicking sets aim directly towards tap point
-                        this.aimAngle = Math.atan2(logical.y - cue.y, logical.x - cue.x);
-                        return;
-                    }
 
                     this.isDragging = true;
                     this.dragStart = pos;
@@ -1564,27 +1534,30 @@
                     const cue = this.balls.find(b => b.id === 0 && !b.pocketed);
                     if (!cue) return;
 
-                    if (this.deviceType === 'MOBILE') return; // Mobile uses tap/virtual buttons
-
-                    if (!this.isDragging) {
+                    if (this.deviceType === 'MOBILE') {
+                        // On mobile, aiming follows drag vector or cursor relative to cue ball and pulling back charges power
                         this.aimAngle = Math.atan2(logical.y - cue.y, logical.x - cue.x);
+                        if (this.isDragging) {
+                            const pullDx = pos.x - this.dragStart.x;
+                            const pullDy = pos.y - this.dragStart.y;
+                            const pullDist = Math.hypot(pullDx, pullDy);
+                            this.shotPower = Math.min(1, Math.max(0.05, pullDist / (140 * this.view.scale)));
+                            this.updatePowerUI();
+                        }
                     } else {
-                        this.dragCurrent = pos;
-                        const pullDx = pos.x - this.dragStart.x;
-                        const pullDy = pos.y - this.dragStart.y;
-                        const pullDist = Math.hypot(pullDx, pullDy);
-
-                        this.shotPower = Math.min(1, Math.max(0.05, pullDist / (180 * this.view.scale)));
-                        this.updatePowerUI();
+                        // On PC, aiming follows mouse cursor smoothly
+                        if (!this.isDragging) {
+                            this.aimAngle = Math.atan2(logical.y - cue.y, logical.x - cue.x);
+                        }
                     }
                 };
 
                 const onUp = () => {
-                    if (this.deviceType === 'MOBILE') return;
                     if (this.gameMode === 'MENU' || (this.gameMode === 'SANDBOX' && this.sandboxState === 'EDIT') || !this.isDragging) return;
                     this.isDragging = false;
 
-                    if (this.shotPower > 0.12) {
+                    // On mobile, releasing drag shoots immediately
+                    if (this.deviceType === 'MOBILE' && this.shotPower > 0.12) {
                         const cue = this.balls.find(b => b.id === 0 && !b.pocketed);
                         if (cue) {
                             if (this.gameMode === 'SANDBOX') {
@@ -1597,55 +1570,30 @@
                                 this.executeShot();
                             }
                         }
-                    } else {
-                        this.shotPower = 0.05;
+                    } else if (this.deviceType === 'MOBILE') {
+                        this.shotPower = 0.75;
                         this.updatePowerUI();
                     }
                 };
 
-                this.canvas.addEventListener('mousedown', onDown);
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (this.deviceType === 'PC') {
+                        // On PC, clicking sets aim angle or handles special actions
+                        onDown(e);
+                    } else {
+                        onDown(e);
+                    }
+                });
                 window.addEventListener('mousemove', onMove);
-                window.addEventListener('mouseup', onUp);
+                window.addEventListener('mouseup', (e) => {
+                    if (this.deviceType === 'MOBILE') {
+                        onUp(e);
+                    }
+                });
 
                 this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onDown(e); }, { passive: false });
                 window.addEventListener('touchmove', (e) => { if (this.isDragging) { e.preventDefault(); onMove(e); } }, { passive: false });
-                window.addEventListener('touchend', onUp);
-
-                document.getElementById('device-mobile-btn').addEventListener('click', () => this.setDeviceType('MOBILE'));
-                document.getElementById('device-pc-btn').addEventListener('click', () => this.setDeviceType('PC'));
-
-                // Mobile Virtual Button Handlers
-                document.getElementById('mob-aim-left').addEventListener('click', () => {
-                    this.aimAngle -= 0.05;
-                });
-                document.getElementById('mob-aim-right').addEventListener('click', () => {
-                    this.aimAngle += 0.05;
-                });
-                document.getElementById('mob-power-up').addEventListener('click', () => {
-                    this.shotPower = Math.min(1, this.shotPower + 0.05);
-                    this.updatePowerUI();
-                });
-                document.getElementById('mob-power-down').addEventListener('click', () => {
-                    this.shotPower = Math.max(0.05, this.shotPower - 0.05);
-                    this.updatePowerUI();
-                });
-                document.getElementById('mob-shoot-btn').addEventListener('click', async () => {
-                    await this.sound.init();
-                    if (this.gameMode === 'SANDBOX' && this.sandboxState === 'PLAY') {
-                        const cue = this.balls.find(b => b.id === 0 && !b.pocketed);
-                        if (cue && this.shotPower >= 0.05) {
-                            const speed = this.shotPower * this.maxPower;
-                            cue.vx = Math.cos(this.aimAngle) * speed;
-                            cue.vy = Math.sin(this.aimAngle) * speed;
-                            this.sound.playCueStrike(this.shotPower);
-                            this.state = 'SHOOTING';
-                        }
-                        return;
-                    }
-                    if (this.state === 'AIMING' && this.shotPower >= 0.05) {
-                        this.executeShot();
-                    }
-                });
+                window.addEventListener('touchend', (e) => { if (this.deviceType === 'MOBILE') onUp(e); });
 
                 document.getElementById('menu-play-btn').addEventListener('click', () => this.startMatchMode());
                 document.getElementById('menu-sandbox-btn').addEventListener('click', () => {
@@ -1749,12 +1697,13 @@
                 document.getElementById('sandbox-sound-btn').addEventListener('click', toggleSound);
 
                 window.addEventListener('keydown', async (e) => {
+                    if (this.deviceType !== 'PC') return; // PC specific keyboard controls
                     if (this.gameMode !== 'MATCH' && this.gameMode !== 'SANDBOX') return;
                     if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
                         e.preventDefault();
                         this.keysPressed[e.code] = true;
                         if (this.state !== 'SHOOTING' && (this.gameMode === 'MATCH' && (this.state === 'AIMING' || this.state === 'BALL_IN_HAND') || (this.gameMode === 'SANDBOX' && this.sandboxState === 'PLAY'))) {
-                            const delta = e.code === 'ArrowUp' ? 0.025 : -0.025;
+                            const delta = e.code === 'ArrowUp' ? 0.035 : -0.035;
                             this.shotPower = Math.min(1, Math.max(0.05, this.shotPower + delta));
                             this.updatePowerUI();
                         }
@@ -1780,7 +1729,7 @@
                             this.updateHUD(`Player ${this.turn}'s Turn`, 'Aim with cursor • ↑/↓ Power • SPACE to shoot');
                         }
 
-                        if (this.state === 'AIMING' && !this.isDragging && this.shotPower >= 0.05) {
+                        if (this.state === 'AIMING' && this.shotPower >= 0.05) {
                             this.executeShot();
                         }
                     }
@@ -1912,16 +1861,6 @@
             }
 
             render() {
-                if (((this.gameMode === 'MATCH' && (this.state === 'AIMING' || this.state === 'BALL_IN_HAND')) || (this.gameMode === 'SANDBOX' && this.sandboxState === 'PLAY')) && (this.keysPressed.ArrowUp || this.keysPressed.ArrowDown)) {
-                    if (this.keysPressed.ArrowUp) {
-                        this.shotPower = Math.min(1, this.shotPower + 0.012);
-                    }
-                    if (this.keysPressed.ArrowDown) {
-                        this.shotPower = Math.max(0.05, this.shotPower - 0.012);
-                    }
-                    this.updatePowerUI();
-                }
-
                 this.updatePhysics();
 
                 const ctx = this.ctx;
