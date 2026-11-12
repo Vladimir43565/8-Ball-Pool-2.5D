@@ -714,6 +714,47 @@
                 }
             }
 
+            updateSandboxUI() {
+                const scoreEl = document.getElementById('sandbox-score');
+                if (scoreEl) scoreEl.textContent = this.sandboxScore;
+
+                const modeIndicator = document.getElementById('sandbox-mode-indicator');
+                const toggleBtn = document.getElementById('sandbox-toggle-mode-btn');
+                const gameFooter = document.getElementById('game-footer');
+                const sandboxHeader = document.getElementById('sandbox-header');
+
+                if (this.gameMode !== 'SANDBOX') {
+                    if (sandboxHeader) sandboxHeader.classList.add('hidden');
+                    return;
+                }
+
+                if (this.sandboxState === 'EDIT') {
+                    if (modeIndicator) {
+                        modeIndicator.textContent = 'Mode: Edit (Click table to add)';
+                        modeIndicator.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600/80 text-white uppercase tracking-wider';
+                    }
+                    if (toggleBtn) {
+                        toggleBtn.textContent = 'Done (Play)';
+                        toggleBtn.className = 'btn-game px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-extrabold uppercase tracking-wide';
+                    }
+                    if (gameFooter) gameFooter.classList.add('hidden');
+                    if (sandboxHeader) sandboxHeader.classList.remove('hidden');
+                } else {
+                    if (modeIndicator) {
+                        modeIndicator.textContent = 'Mode: Play (Aim & Shoot)';
+                        modeIndicator.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-600/80 text-white uppercase tracking-wider';
+                    }
+                    if (toggleBtn) {
+                        toggleBtn.textContent = 'Edit Setup';
+                        toggleBtn.className = 'btn-game px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-extrabold uppercase tracking-wide';
+                    }
+                    if (gameFooter) gameFooter.classList.remove('hidden');
+                    if (sandboxHeader) sandboxHeader.classList.remove('hidden');
+                    document.getElementById('status-title').textContent = 'Sandbox Play';
+                    document.getElementById('status-sub').textContent = 'Aim & drag to shoot';
+                }
+            }
+
             returnToMenu() {
                 this.gameMode = 'MENU';
                 if (this.timerInterval) clearInterval(this.timerInterval);
