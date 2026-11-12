@@ -25,13 +25,6 @@
             height: 100vh;
         }
 
-        /* Ensure smooth landscape responsiveness on mobile and tablet */
-        @media screen and (orientation: portrait) {
-            #mobile-rotate-warning {
-                display: flex !important;
-            }
-        }
-
         #app-container {
             width: 100%;
             height: 100%;
@@ -179,14 +172,6 @@
     <main id="canvas-wrapper" class="w-full relative">
         <canvas id="poolCanvas"></canvas>
 
-        <!-- Portrait Orientation Warning Overlay for Mobile/Tablet -->
-        <div id="mobile-rotate-warning" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md flex-col items-center justify-center p-6 z-50 text-center rounded-2xl">
-            <div class="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center mx-auto mb-4 text-3xl animate-bounce">📱🔄</div>
-            <h2 class="text-xl font-black text-white mb-2">Please Rotate to Landscape</h2>
-            <p class="text-xs text-slate-300 max-w-xs mb-4">This 8-ball pool game is optimized for landscape mode on mobile and tablets.</p>
-            <button id="dismiss-rotate-btn" class="btn-game px-6 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-xs uppercase tracking-wider">Continue Anyway</button>
-        </div>
-
         <!-- UI Fit & Landscape Calibration Modal (Triggered by user button) -->
         <div id="calibration-overlay" class="hidden absolute inset-0 bg-slate-950 flex items-center justify-center p-4 z-50 rounded-2xl">
             <div class="glass-panel max-w-md w-full rounded-2xl p-8 text-center shadow-2xl border border-white/15 calibration-glow">
@@ -247,6 +232,9 @@
                     <button id="menu-sandbox-btn" class="btn-game w-full py-3.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold text-sm uppercase tracking-wider border border-amber-400/40 shadow-lg flex items-center justify-center gap-2">
                         <span>🛠</span> Sandbox Mode (Custom Editor)
                     </button>
+                    <a href="https://discord.gg/Sc5qabJd5W" target="_blank" rel="noopener noreferrer" class="btn-game w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2">
+                        <span>💬</span> Join Discord (Bugs & Ideas)
+                    </a>
                 </div>
             </div>
         </div>
@@ -570,10 +558,173 @@
                 this.view = { scale: 1, offsetX: 0, offsetY: 0 };
 
                 this.initPockets();
-                this.bindEvents();
                 this.buildSandboxPicker();
+                this.bindEvents();
                 this.handleResize();
                 this.updatePowerUI();
+            }
+
+            toScreen(lx, ly) {
+                const sx = this.view.offsetX + (lx + this.railSize) * this.view.scale;
+                const sy = this.view.offsetY + (ly * this.perspectiveTilt + this.railSize) * this.view.scale;
+                return { x: sx, y: sy };
+            }
+
+            toLogical(sx, sy) {
+                const lx = (sx - this.view.offsetX) / this.view.scale - this.railSize;
+                const ly = ((sy - this.view.offsetY) / this.view.scale - this.railSize) / this.perspectiveTilt;
+                return { x: lx, y: ly };
+            }
+
+            initPockets() {
+                const r = this.pocketRadius;
+                const w = this.tableW;
+                const h = this.tableH;
+                const cornerOffset = 6;
+                this.pockets = [
+                    { x: cornerOffset, y: cornerOffset, r: r * 1.12 },
+                    { x: w * 0.5, y: -4, r: r * 1.04 },
+                    { x: w - cornerOffset, y: cornerOffset, r: r * 1.12 },
+                    { x: cornerOffset, y: h - cornerOffset, r: r * 1.12 },
+                    { x: w * 0.5, y: h + 4, r: r * 1.04 },
+                    { x: w - cornerOffset, y: h - cornerOffset, r: r * 1.12 }
+                ];
+            }
+
+            createBall(id, x, y) {
+                return {
+                    id,
+                    x,
+                    y,
+                    vx: 0,
+                    vy: 0,
+                    wx: 0,
+                    wy: 0,
+                    wz: 0,
+                    quat: Quat.identity(),
+                    pocketed: false,
+                    pocketAnim: 0
+                };
+            }
+
+            rackBalls() {
+                this.matchBalls = [];
+                this.turn = 1;
+                this.suits = { 1: null, 2: null };
+                this.state = 'AIMING';
+                this.isBreakShot = true;
+                this.pocketedThisTurn = [];
+                this.firstHitBall = null;
+                this.shotPower = 0.75;
+                this.resetSpin();
+                this.updatePowerUI();
+                document.getElementById('game-over-modal').classList.add('hidden');
+
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.matchStartTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.matchStartTime) / 1000);
+                    const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                    const secs = String(elapsed % 60).padStart(2, '0');
+                    const timerEl = document.getElementById('match-timer');
+                    if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+                }, 1000);
+
+                this.matchBalls.push(this.createBall(0, this.tableW * 0.25, this.tableH * 0.5));
+
+                const apexX = this.tableW * 0.72;
+                const apexY = this.tableH * 0.5;
+                const r = this.ballRadius;
+                const rowSpacing = r * Math.sqrt(3) + 0.4;
+                const colSpacing = r * 2 + 0.4;
+                const rackIds = [1, 9, 2, 3, 8, 10, 11, 4, 14, 5, 6, 15, 7, 12, 13];
+
+                let idx = 0;
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col <= row; col++) {
+                        const id = rackIds[idx++];
+                        const bx = apexX + row * rowSpacing;
+                        const by = apexY + (col - row * 0.5) * colSpacing;
+                        const ball = this.createBall(id, bx, by);
+                        const randAxis = Quat.normalize([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5, 0]);
+                        ball.quat = Quat.fromAxisAngle(randAxis[0], randAxis[1], randAxis[2], Math.random() * Math.PI * 2);
+                        this.matchBalls.push(ball);
+                    }
+                }
+
+                this.balls = this.matchBalls;
+                this.updateHUD('Player 1 Break', 'Aim & drag to shoot');
+            }
+
+            startMatchMode() {
+                this.gameMode = 'MATCH';
+                document.getElementById('main-menu-overlay').classList.add('hidden');
+                document.getElementById('game-header').classList.remove('hidden');
+                document.getElementById('game-footer').classList.remove('hidden');
+                document.getElementById('sandbox-header').classList.add('hidden');
+                document.getElementById('sandbox-footer').classList.add('hidden');
+                this.rackBalls();
+                this.handleResize();
+            }
+
+            startSandboxMode() {
+                this.gameMode = 'SANDBOX';
+                this.sandboxState = 'EDIT';
+                document.getElementById('main-menu-overlay').classList.add('hidden');
+                document.getElementById('game-header').classList.add('hidden');
+                document.getElementById('game-footer').classList.add('hidden');
+                document.getElementById('sandbox-header').classList.remove('hidden');
+                document.getElementById('sandbox-footer').classList.add('hidden');
+                this.sandboxScore = 0;
+                this.rackSandbox();
+                this.updateSandboxUI();
+                this.handleResize();
+            }
+
+            rackSandbox() {
+                this.sandboxBalls = [];
+                this.shotPower = 0.75;
+                this.resetSpin();
+                this.updatePowerUI();
+
+                this.sandboxBalls.push(this.createBall(0, this.tableW * 0.25, this.tableH * 0.5));
+                this.balls = this.sandboxBalls;
+                this.sandboxScore = 0;
+                this.updateSandboxUI();
+            }
+
+            buildSandboxPicker() {
+                const picker = document.getElementById('sandbox-ball-picker');
+                if (!picker) return;
+                picker.innerHTML = '';
+                for (let id = 1; id <= 15; id++) {
+                    const st = BALL_STYLES[id];
+                    const bg = st.stripe
+                        ? `background: linear-gradient(180deg, #fff 22%, ${st.color} 22%, ${st.color} 78%, #fff 78%);`
+                        : `background: ${st.color};`;
+                    const btn = document.createElement('button');
+                    btn.className = `w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-md border-2 ${id === this.sandboxSelectedBallId ? 'border-amber-400 scale-110' : 'border-white/25'}`;
+                    btn.style.cssText += bg;
+                    btn.innerHTML = `<span class="bg-white/95 rounded-full w-3.5 h-3.5 flex items-center justify-center text-[8px] text-slate-900">${st.num}</span>`;
+                    btn.onclick = () => {
+                        this.sandboxSelectedBallId = id;
+                        this.buildSandboxPicker();
+                    };
+                    picker.appendChild(btn);
+                }
+            }
+
+            returnToMenu() {
+                this.gameMode = 'MENU';
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                document.getElementById('main-menu-overlay').classList.remove('hidden');
+                document.getElementById('game-header').classList.add('hidden');
+                document.getElementById('game-footer').classList.add('hidden');
+                document.getElementById('sandbox-header').classList.add('hidden');
+                document.getElementById('sandbox-footer').classList.add('hidden');
+                document.getElementById('game-over-modal').classList.add('hidden');
+                this.balls = [];
+                this.handleResize();
             }
 
             triggerUiFitting() {
@@ -581,8 +732,8 @@
                 if (!overlay) return;
                 overlay.classList.remove('hidden');
 
-                document.getElementById('calibration-title').textContent = "Turn Device to Landscape";
-                document.getElementById('calibration-desc').textContent = "Please rotate your phone/tablet to landscape mode for best fitting.";
+                document.getElementById('calibration-title').textContent = "Screen & UI Calibration";
+                document.getElementById('calibration-desc').textContent = "Optimizing layout for your current orientation (Landscape or Vertical).";
                 document.getElementById('calibration-progress-box').classList.add('hidden');
                 document.getElementById('calibration-action-box').classList.remove('hidden');
                 document.getElementById('calibration-ready-btn').classList.add('hidden');
@@ -625,220 +776,10 @@
                 };
 
                 finishBtn.onclick = () => {
-            overlay.classList.add('hidden');
-            this.handleResize();
-            // Force viewport reflow and layout adjustment
-            document.body.style.zoom = '99%';
-            setTimeout(() => { document.body.style.zoom = '100%'; this.handleResize(); }, 100);
-        };
-    }
-
-    toScreen(lx, ly) {
-                const sx = this.view.offsetX + (lx + this.railSize) * this.view.scale;
-                const sy = this.view.offsetY + (ly * this.perspectiveTilt + this.railSize) * this.view.scale;
-                return { x: sx, y: sy };
-            }
-
-            toLogical(sx, sy) {
-                const lx = (sx - this.view.offsetX) / this.view.scale - this.railSize;
-                const ly = ((sy - this.view.offsetY) / this.view.scale - this.railSize) / this.perspectiveTilt;
-                return { x: lx, y: ly };
-            }
-
-            initPockets() {
-                const r = this.pocketRadius;
-                const w = this.tableW;
-                const h = this.tableH;
-                const cornerOffset = 6;
-                this.pockets = [
-                    { x: cornerOffset, y: cornerOffset, r: r * 1.12 },
-                    { x: w * 0.5, y: -4, r: r * 1.04 },
-                    { x: w - cornerOffset, y: cornerOffset, r: r * 1.12 },
-                    { x: cornerOffset, y: h - cornerOffset, r: r * 1.12 },
-                    { x: w * 0.5, y: h + 4, r: r * 1.04 },
-                    { x: w - cornerOffset, y: h - cornerOffset, r: r * 1.12 }
-                ];
-            }
-
-            rackBalls() {
-                this.matchBalls = [];
-                this.turn = 1;
-                this.suits = { 1: null, 2: null };
-                this.state = 'AIMING';
-                this.isBreakShot = true;
-                this.pocketedThisTurn = [];
-                this.firstHitBall = null;
-                this.shotPower = 0.75;
-                this.resetSpin();
-                this.updatePowerUI();
-                document.getElementById('game-over-modal').classList.add('hidden');
-
-                this.matchBalls.push(this.createBall(0, this.tableW * 0.25, this.tableH * 0.5));
-
-                const apexX = this.tableW * 0.72;
-                const apexY = this.tableH * 0.5;
-                const r = this.ballRadius;
-                const rowSpacing = r * Math.sqrt(3) + 0.4;
-                const colSpacing = r * 2 + 0.4;
-                const rackIds = [1, 9, 2, 3, 8, 10, 11, 4, 14, 5, 6, 15, 7, 12, 13];
-
-                let idx = 0;
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col <= row; col++) {
-                        const id = rackIds[idx++];
-                        const bx = apexX + row * rowSpacing;
-                        const by = apexY + (col - row * 0.5) * colSpacing;
-                        const ball = this.createBall(id, bx, by);
-                        const randAxis = Quat.normalize([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5, 0]);
-                        ball.quat = Quat.fromAxisAngle(randAxis[0], randAxis[1], randAxis[2], Math.random() * Math.PI * 2);
-                        this.matchBalls.push(ball);
-                    }
-                }
-
-                this.balls = this.matchBalls;
-                this.updateHUD('Player 1 Break', 'Aim & drag back to shoot');
-                this.startTimer();
-            }
-
-            startTimer() {
-                this.matchStartTime = Date.now();
-                if (this.timerInterval) clearInterval(this.timerInterval);
-                this.timerInterval = setInterval(() => {
-                    if (this.gameMode === 'MATCH' && this.state !== 'GAME_OVER') {
-                        const elapsed = Math.floor((Date.now() - this.matchStartTime) / 1000);
-                        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-                        const secs = String(elapsed % 60).padStart(2, '0');
-                        const timerEl = document.getElementById('match-timer');
-                        if (timerEl) timerEl.textContent = `${mins}:${secs}`;
-                    }
-                }, 1000);
-            }
-
-            startMatchMode() {
-                this.gameMode = 'MATCH';
-                document.getElementById('main-menu-overlay').classList.add('hidden');
-                document.getElementById('game-header').classList.remove('hidden');
-                document.getElementById('game-footer').classList.remove('hidden');
-                document.getElementById('sandbox-header').classList.add('hidden');
-                document.getElementById('sandbox-footer').classList.add('hidden');
-                this.rackBalls();
-                this.handleResize();
-            }
-
-            startSandboxMode() {
-                this.gameMode = 'SANDBOX';
-                this.sandboxState = 'EDIT';
-                document.getElementById('main-menu-overlay').classList.add('hidden');
-                document.getElementById('game-header').classList.add('hidden');
-                document.getElementById('game-footer').classList.add('hidden');
-                document.getElementById('sandbox-header').classList.remove('hidden');
-                document.getElementById('sandbox-footer').classList.add('hidden');
-                this.sandboxScore = 0;
-                this.rackSandbox();
-                this.updateSandboxUI();
-                this.handleResize();
-            }
-
-            rackSandbox() {
-                this.sandboxBalls = [];
-                this.shotPower = 0.75;
-                this.resetSpin();
-                this.updatePowerUI();
-
-                this.sandboxBalls.push(this.createBall(0, this.tableW * 0.25, this.tableH * 0.5));
-                this.balls = this.sandboxBalls;
-                this.sandboxScore = 0;
-                this.updateSandboxUI();
-            }
-
-            returnToMenu() {
-                this.gameMode = 'MENU';
-                if (this.timerInterval) clearInterval(this.timerInterval);
-                document.getElementById('main-menu-overlay').classList.remove('hidden');
-                document.getElementById('game-header').classList.add('hidden');
-                document.getElementById('game-footer').classList.add('hidden');
-                document.getElementById('sandbox-header').classList.add('hidden');
-                document.getElementById('sandbox-footer').classList.add('hidden');
-                document.getElementById('game-over-modal').classList.add('hidden');
-                this.balls = [];
-                this.handleResize();
-            }
-
-            buildSandboxPicker() {
-                const picker = document.getElementById('sandbox-ball-picker');
-                if (!picker) return;
-                picker.innerHTML = '';
-                for (let id = 1; id <= 15; id++) {
-                    const st = BALL_STYLES[id];
-                    const bg = st.stripe
-                        ? `background: linear-gradient(180deg, #fff 22%, ${st.color} 22%, ${st.color} 78%, #fff 78%);`
-                        : `background: ${st.color};`;
-                    const btn = document.createElement('button');
-                    btn.className = `w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-md border-2 ${id === this.sandboxSelectedBallId ? 'border-amber-400 scale-110' : 'border-white/25'}`;
-                    btn.style.cssText += bg;
-                    btn.innerHTML = `<span class="bg-white/95 rounded-full w-3.5 h-3.5 flex items-center justify-center text-[8px] text-slate-900">${st.num}</span>`;
-                    btn.onclick = () => {
-                        this.sandboxSelectedBallId = id;
-                        this.buildSandboxPicker();
-                    };
-                    picker.appendChild(btn);
-                }
-            }
-
-            updateSandboxUI() {
-                const scoreEl = document.getElementById('sandbox-score');
-                if (scoreEl) scoreEl.textContent = this.sandboxScore;
-
-                const modeIndicator = document.getElementById('sandbox-mode-indicator');
-                const toggleBtn = document.getElementById('sandbox-toggle-mode-btn');
-                const gameFooter = document.getElementById('game-footer');
-                const sandboxHeader = document.getElementById('sandbox-header');
-
-                if (this.gameMode !== 'SANDBOX') {
-                    if (sandboxHeader) sandboxHeader.classList.add('hidden');
-                    return;
-                }
-
-                if (this.sandboxState === 'EDIT') {
-                    if (modeIndicator) {
-                        modeIndicator.textContent = 'Mode: Edit (Click table to add)';
-                        modeIndicator.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600/80 text-white uppercase tracking-wider';
-                    }
-                    if (toggleBtn) {
-                        toggleBtn.textContent = 'Done (Play)';
-                        toggleBtn.className = 'btn-game px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-extrabold uppercase tracking-wide';
-                    }
-                    if (gameFooter) gameFooter.classList.add('hidden');
-                    if (sandboxHeader) sandboxHeader.classList.remove('hidden');
-                } else {
-                    if (modeIndicator) {
-                        modeIndicator.textContent = 'Mode: Play (Aim & Drag)';
-                        modeIndicator.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-600/80 text-white uppercase tracking-wider';
-                    }
-                    if (toggleBtn) {
-                        toggleBtn.textContent = 'Edit Setup';
-                        toggleBtn.className = 'btn-game px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-extrabold uppercase tracking-wide';
-                    }
-                    if (gameFooter) gameFooter.classList.remove('hidden');
-                    if (sandboxHeader) sandboxHeader.classList.remove('hidden');
-                    document.getElementById('status-title').textContent = 'Sandbox Play';
-                    document.getElementById('status-sub').textContent = 'Aim & drag back to shoot';
-                }
-            }
-
-            createBall(id, x, y) {
-                return {
-                    id,
-                    x,
-                    y,
-                    vx: 0,
-                    vy: 0,
-                    wx: 0,
-                    wy: 0,
-                    wz: 0,
-                    quat: Quat.identity(),
-                    pocketed: false,
-                    pocketAnim: 0
+                    overlay.classList.add('hidden');
+                    this.handleResize();
+                    document.body.style.zoom = '99%';
+                    setTimeout(() => { document.body.style.zoom = '100%'; this.handleResize(); }, 100);
                 };
             }
 
@@ -1802,14 +1743,6 @@
                     this.rackSandbox();
                 });
 
-                const dismissRotateBtn = document.getElementById('dismiss-rotate-btn');
-                if (dismissRotateBtn) {
-                    dismissRotateBtn.addEventListener('click', () => {
-                        const warning = document.getElementById('mobile-rotate-warning');
-                        if (warning) warning.style.display = 'none';
-                    });
-                }
-
                 const spinPad = document.getElementById('spin-pad');
                 const updateSpinFromEvent = (e) => {
                     const rect = spinPad.getBoundingClientRect();
@@ -1990,6 +1923,8 @@
                 const rect = wrapper.getBoundingClientRect();
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+                const isPortrait = window.innerHeight > window.innerWidth;
+                // If portrait on mobile, optionally rotate logical rendering aspect or adapt scaling
                 const logicalFullW = this.tableW + this.railSize * 2;
                 const logicalFullH = this.tableH * this.perspectiveTilt + this.railSize * 2;
                 const aspect = logicalFullW / logicalFullH;
@@ -2001,7 +1936,6 @@
                     drawW = rect.height * aspect;
                 }
 
-                // Force slight inset scale on mobile to prevent any UI clipping
                 if (window.innerWidth <= 768) {
                     drawW *= 0.94;
                     drawH *= 0.94;
